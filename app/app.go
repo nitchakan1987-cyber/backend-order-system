@@ -8,10 +8,13 @@ import (
 	"net/http"
 	"time"
 
+	"orders_backend/api"
 	"orders_backend/config"
 	"orders_backend/database"
 	"orders_backend/health"
+	"orders_backend/repository"
 	"orders_backend/router"
+	"orders_backend/service"
 )
 
 func Run(ctx context.Context) error {
@@ -34,10 +37,14 @@ func Run(ctx context.Context) error {
 	log.Println("MySQL connected")
 
 	healthHandler := health.NewHandler(db)
+	mysqlRepository := repository.NewMySQL(db)
+	apiService := service.New(mysqlRepository)
+	apiHandler := api.New(apiService)
 
 	// สร้าง Gin router
 	httpHandler := router.New(router.Dependencies{
 		Health: healthHandler,
+		API:    apiHandler,
 	})
 
 	// สร้าง HTTP server โดยใช้ Gin จัดการ request
