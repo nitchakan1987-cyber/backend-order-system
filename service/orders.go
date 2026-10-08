@@ -48,7 +48,7 @@ type OrderItemInput struct {
 	UnitPrice    string `json:"unitPrice"`
 }
 
-func (s *Service) CreateOrder(ctx context.Context, principal repository.Principal, request OrderRequest) (repository.OrderDetail, error) {
+func (s *Service) CreateOrder(ctx context.Context, request OrderRequest) (repository.OrderDetail, error) {
 	draft, fields := NormalizeOrder(request)
 	if len(fields) > 0 {
 		return repository.OrderDetail{}, &ValidationError{Fields: fields}
@@ -60,19 +60,19 @@ func (s *Service) CreateOrder(ctx context.Context, principal repository.Principa
 	return s.repository.LoadOrder(ctx, orderID)
 }
 
-func (s *Service) UpdateOrder(ctx context.Context, principal repository.Principal, orderID int64, request OrderRequest) (repository.OrderDetail, error) {
+func (s *Service) UpdateOrder(ctx context.Context, orderID int64, request OrderRequest) (repository.OrderDetail, error) {
 	draft, fields := NormalizeOrder(request)
 	if len(fields) > 0 {
 		return repository.OrderDetail{}, &ValidationError{Fields: fields}
 	}
-	if err := s.repository.UpdateOrder(ctx, orderID, principal.SalespersonIDs, draft); err != nil {
+	if err := s.repository.UpdateOrder(ctx, orderID, draft); err != nil {
 		return repository.OrderDetail{}, err
 	}
 	return s.repository.LoadOrder(ctx, orderID)
 }
 
-func (s *Service) DeleteOrder(ctx context.Context, principal repository.Principal, orderID int64) error {
-	return s.repository.DeleteOrder(ctx, orderID, principal.SalespersonIDs)
+func (s *Service) DeleteOrder(ctx context.Context, orderID int64) error {
+	return s.repository.DeleteOrder(ctx, orderID)
 }
 
 func NormalizeOrder(request OrderRequest) (repository.OrderDraft, []FieldError) {

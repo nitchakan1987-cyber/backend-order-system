@@ -19,7 +19,7 @@ func (h *Handler) updateOrder(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid request body", []apiFieldError{{Field: "body", Message: "Must be valid JSON with only supported fields"}})
 		return
 	}
-	result, err := h.service.UpdateOrder(c.Request.Context(), toRepositoryPrincipal(getPrincipal(c)), orderID, request)
+	result, err := h.service.UpdateOrder(c.Request.Context(), orderID, request)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -33,7 +33,7 @@ func (h *Handler) deleteOrder(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid orderId", []apiFieldError{{Field: "orderId", Message: "Must be a positive integer"}})
 		return
 	}
-	if err := h.service.DeleteOrder(c.Request.Context(), toRepositoryPrincipal(getPrincipal(c)), orderID); err != nil {
+	if err := h.service.DeleteOrder(c.Request.Context(), orderID); err != nil {
 		writeServiceError(c, err)
 		return
 	}

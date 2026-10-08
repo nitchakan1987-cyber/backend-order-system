@@ -23,8 +23,8 @@ type Repository interface {
 	LoadOrder(context.Context, int64) (repository.OrderDetail, error)
 	ListDeliverySchedule(context.Context, []int64, time.Time, time.Time) ([]repository.DeliveryRow, error)
 	CreateOrder(context.Context, repository.OrderDraft) (int64, error)
-	UpdateOrder(context.Context, int64, []int64, repository.OrderDraft) error
-	DeleteOrder(context.Context, int64, []int64) error
+	UpdateOrder(context.Context, int64, repository.OrderDraft) error
+	DeleteOrder(context.Context, int64) error
 }
 
 type Service struct {

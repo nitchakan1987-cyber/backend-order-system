@@ -41,24 +41,19 @@ func (r *MySQL) CreateOrder(ctx context.Context, draft OrderDraft) (int64, error
 	return orderID, nil
 }
 
-func (r *MySQL) UpdateOrder(ctx context.Context, orderID int64, salespersonIDs []int64, draft OrderDraft) error {
+func (r *MySQL) UpdateOrder(ctx context.Context, orderID int64, draft OrderDraft) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	args := []any{orderID}
-	for _, id := range salespersonIDs {
-		args = append(args, id)
-	}
 	var status string
 	err = tx.QueryRowContext(ctx, `
 		SELECT CASE WHEN EXISTS (
 			SELECT 1 FROM order_items AS shipped
 			WHERE shipped.order_id = orders.id AND shipped.deliveryStatus = 'SHIPPED'
 		) THEN 'SHIPPED' ELSE 'NOT_SHIPPED' END
-		FROM orders WHERE id = ? AND deleted_at IS NULL
-		AND salesperson_id IN (`+placeholders(len(salespersonIDs))+`) FOR UPDATE`, args...).Scan(&status)
+		FROM orders WHERE id = ? AND deleted_at IS NULL FOR UPDATE`, orderID).Scan(&status)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ErrOrderNotFound
 	}
@@ -94,24 +89,19 @@ func (r *MySQL) UpdateOrder(ctx context.Context, orderID int64, salespersonIDs [
 	return tx.Commit()
 }
 
-func (r *MySQL) DeleteOrder(ctx context.Context, orderID int64, salespersonIDs []int64) error {
+func (r *MySQL) DeleteOrder(ctx context.Context, orderID int64) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	args := []any{orderID}
-	for _, id := range salespersonIDs {
-		args = append(args, id)
-	}
 	var status string
 	err = tx.QueryRowContext(ctx, `
 		SELECT CASE WHEN EXISTS (
 			SELECT 1 FROM order_items AS shipped
 			WHERE shipped.order_id = orders.id AND shipped.deliveryStatus = 'SHIPPED'
 		) THEN 'SHIPPED' ELSE 'NOT_SHIPPED' END
-		FROM orders WHERE id = ? AND deleted_at IS NULL
-		AND salesperson_id IN (`+placeholders(len(salespersonIDs))+`) FOR UPDATE`, args...).Scan(&status)
+		FROM orders WHERE id = ? AND deleted_at IS NULL  FOR UPDATE`, orderID).Scan(&status)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ErrOrderNotFound
 	}

@@ -15,7 +15,7 @@ func (h *Handler) createOrder(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid request body", []apiFieldError{{Field: "body", Message: "Must be valid JSON with only supported fields"}})
 		return
 	}
-	result, err := h.service.CreateOrder(c.Request.Context(), toRepositoryPrincipal(getPrincipal(c)), request)
+	result, err := h.service.CreateOrder(c.Request.Context(), request)
 	if err != nil {
 		writeServiceError(c, err)
 		return

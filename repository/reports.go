@@ -23,9 +23,7 @@ func (r *MySQL) ListDeliverySchedule(ctx context.Context, salespersonIDs []int64
 		return []DeliveryRow{}, nil
 	}
 	args := []any{start.Format("2006-01-02"), end.AddDate(0, 0, 1).Format("2006-01-02")}
-	for _, id := range salespersonIDs {
-		args = append(args, id)
-	}
+
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT DATE_FORMAT(item.delivery_at, '%Y-%m-%d'), o.id, o.order_no,
 			c.id, c.name, p.id, p.product_code, p.name,
@@ -37,7 +35,6 @@ func (r *MySQL) ListDeliverySchedule(ctx context.Context, salespersonIDs []int64
 		JOIN products AS p ON p.id = item.product_id
 		WHERE item.delivery_at >= ? AND item.delivery_at < ?
 			AND o.deleted_at IS NULL
-			AND o.salesperson_id IN (`+placeholders(len(salespersonIDs))+`)
 		ORDER BY item.delivery_at, o.order_no, item.product_id`, args...)
 	if err != nil {
 		return nil, err
