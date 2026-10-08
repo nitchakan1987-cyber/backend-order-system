@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -71,7 +72,10 @@ func (h *Handler) requestID() gin.HandlerFunc {
 
 func (h *Handler) authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		parts := strings.Fields(c.GetHeader("Authorization"))
+		auth := c.GetHeader("Authorization")
+		log.Printf("Authorization = %q", auth)
+		parts := strings.Fields(auth)
+		log.Printf("parts = %#v, len = %d", parts, len(parts))
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
 			writeError(c, http.StatusUnauthorized, "UNAUTHENTICATED", "Authentication required", nil)
 			c.Abort()
@@ -79,6 +83,9 @@ func (h *Handler) authenticate() gin.HandlerFunc {
 		}
 
 		current, err := h.service.Authenticate(c.Request.Context(), parts[1])
+
+		log.Printf("Authenticate result: current=%+v, err=%v", current, err)
+
 		if errors.Is(err, service.ErrUnauthenticated) {
 			writeError(c, http.StatusUnauthorized, "UNAUTHENTICATED", "Authentication required", nil)
 			c.Abort()

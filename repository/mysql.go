@@ -83,10 +83,8 @@ func (r *MySQL) Authenticate(ctx context.Context, token string) (Principal, bool
 func (r *MySQL) ListSalespersons(ctx context.Context, tokenID int64) ([]Salesperson, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT s.id, s.code, s.name
-		FROM api_token_salespersons AS access
-		JOIN salesperson AS s ON s.id = access.salesperson_id
-		WHERE access.token_id = ?
-		ORDER BY s.name, s.id`, tokenID)
+		FROM salesperson as s
+		ORDER BY s.name, s.id`)
 	if err != nil {
 		return nil, err
 	}
@@ -105,41 +103,58 @@ func (r *MySQL) ListSalespersons(ctx context.Context, tokenID int64) ([]Salesper
 	return items, rows.Err()
 }
 
-func (r *MySQL) ListCustomers(ctx context.Context, salespersonIDs []int64, onlySalespersonID int64) ([]Customer, error) {
-	if len(salespersonIDs) == 0 {
-		return []Customer{}, nil
-	}
+func (r *MySQL) ListCustomers(
+	ctx context.Context,
+	salespersonID int64,
+) ([]Customer, error) {
+
 	query := `
-		SELECT c.id, c.code, c.name, mapping.salesperson_id,
-			CASE WHEN UPPER(c.marketType) = 'EXPORT' THEN 'EXPORT' ELSE 'DOMESTIC' END
-		FROM salesperson_customers AS mapping
-		JOIN customers AS c ON c.id = mapping.customer_id
-		WHERE mapping.active = TRUE AND mapping.salesperson_id IN (` + placeholders(len(salespersonIDs)) + `)`
-	args := make([]any, len(salespersonIDs))
-	for index, id := range salespersonIDs {
-		args[index] = id
-	}
-	if onlySalespersonID > 0 {
-		query += " AND mapping.salesperson_id = ?"
-		args = append(args, onlySalespersonID)
-	}
-	query += " ORDER BY c.name, c.id, mapping.salesperson_id"
-	rows, err := r.db.QueryContext(ctx, query, args...)
+		SELECT DISTINCT
+			c.id,
+			c.code,
+			c.name,
+			ord.salesperson_id,
+			CASE
+				WHEN UPPER(c.marketType) = 'EXPORT' THEN 'EXPORT'
+				ELSE 'DOMESTIC'
+			END AS market_type
+		FROM customers AS c
+		INNER JOIN orders AS ord
+			ON ord.customer_id = c.id
+		WHERE ord.salesperson_id = ?
+		ORDER BY c.name, c.id
+	`
+
+	rows, err := r.db.QueryContext(
+		ctx,
+		query,
+		salespersonID,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	items := make([]Customer, 0)
+
 	for rows.Next() {
 		var item Customer
 		var code sql.NullString
-		if err := rows.Scan(&item.ID, &code, &item.Name, &item.SalespersonID, &item.MarketType); err != nil {
+
+		if err := rows.Scan(
+			&item.ID,
+			&code,
+			&item.Name,
+			&item.SalespersonID,
+			&item.MarketType,
+		); err != nil {
 			return nil, err
 		}
+
 		item.Code = code.String
 		items = append(items, item)
 	}
+
 	return items, rows.Err()
 }
 

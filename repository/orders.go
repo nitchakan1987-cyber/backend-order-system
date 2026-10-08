@@ -116,7 +116,7 @@ type OrderDetail struct {
 }
 
 func (r *MySQL) ListOrders(ctx context.Context, filter OrderFilter) (OrderList, error) {
-	filters := `o.order_date >= ? AND o.order_date < ? AND o.deleted_at IS NULL AND o.salesperson_id IN (` + placeholders(len(filter.SalespersonIDs)) + `)`
+	filters := `o.order_date >= ? AND o.order_date < ? AND o.deleted_at IS NULL`
 	filterArgs := []any{filter.StartDate.Format("2006-01-02"), filter.EndDate.AddDate(0, 0, 1).Format("2006-01-02")}
 	for _, id := range filter.SalespersonIDs {
 		filterArgs = append(filterArgs, id)

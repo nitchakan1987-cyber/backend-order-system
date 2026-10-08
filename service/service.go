@@ -16,7 +16,7 @@ var (
 type Repository interface {
 	Authenticate(context.Context, string) (repository.Principal, bool, error)
 	ListSalespersons(context.Context, int64) ([]repository.Salesperson, error)
-	ListCustomers(context.Context, []int64, int64) ([]repository.Customer, error)
+	ListCustomers(context.Context, int64) ([]repository.Customer, error)
 	ListProducts(context.Context) ([]repository.Product, error)
 	LatestProductPrice(context.Context, int64) (repository.ProductPrice, error)
 	ListOrders(context.Context, repository.OrderFilter) (repository.OrderList, error)
@@ -54,10 +54,7 @@ func (s *Service) Salespersons(ctx context.Context, principal repository.Princip
 }
 
 func (s *Service) Customers(ctx context.Context, principal repository.Principal, salespersonID int64) ([]repository.Customer, error) {
-	if salespersonID > 0 && !hasSalesperson(principal, salespersonID) {
-		return nil, ErrForbidden
-	}
-	return s.repository.ListCustomers(ctx, principal.SalespersonIDs, salespersonID)
+	return s.repository.ListCustomers(ctx, salespersonID)
 }
 
 func (s *Service) Products(ctx context.Context) ([]repository.Product, error) {
@@ -69,10 +66,6 @@ func (s *Service) ProductPrice(ctx context.Context, productID int64) (repository
 }
 
 func (s *Service) Orders(ctx context.Context, principal repository.Principal, filter repository.OrderFilter) (repository.OrderList, error) {
-	if filter.SalespersonID > 0 && !hasSalesperson(principal, filter.SalespersonID) {
-		return repository.OrderList{}, ErrForbidden
-	}
-	filter.SalespersonIDs = principal.SalespersonIDs
 	return s.repository.ListOrders(ctx, filter)
 }
 
