@@ -128,7 +128,7 @@ func (r *MySQL) DeleteOrder(ctx context.Context, orderID int64, salespersonIDs [
 }
 
 func validateOrder(ctx context.Context, tx *sql.Tx, draft *OrderDraft, oldPrices map[int64]int64) error {
-	marketType, err := customerMarketType(ctx, tx, draft.SalespersonID, draft.CustomerID)
+	marketType, err := customerMarketType(ctx, tx, draft.CustomerID)
 	if err != nil {
 		return err
 	}
@@ -174,14 +174,12 @@ func validateOrder(ctx context.Context, tx *sql.Tx, draft *OrderDraft, oldPrices
 	return nil
 }
 
-func customerMarketType(ctx context.Context, tx *sql.Tx, salespersonID, customerID int64) (string, error) {
+func customerMarketType(ctx context.Context, tx *sql.Tx, customerID int64) (string, error) {
 	var marketType string
 	err := tx.QueryRowContext(ctx, `
 		SELECT CASE WHEN UPPER(c.marketType) = 'EXPORT' THEN 'EXPORT' ELSE 'DOMESTIC' END
-		FROM salesperson_customers AS mapping
-		JOIN customers AS c ON c.id = mapping.customer_id
-		WHERE mapping.salesperson_id = ? AND mapping.customer_id = ? AND mapping.active = TRUE`,
-		salespersonID, customerID).Scan(&marketType)
+		FROM customers AS c
+		WHERE c.id = ?`, customerID).Scan(&marketType)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", ErrCustomerAccess
 	}

@@ -53,9 +53,6 @@ func (s *Service) CreateOrder(ctx context.Context, principal repository.Principa
 	if len(fields) > 0 {
 		return repository.OrderDetail{}, &ValidationError{Fields: fields}
 	}
-	if !hasSalesperson(principal, draft.SalespersonID) {
-		return repository.OrderDetail{}, ErrForbidden
-	}
 	orderID, err := s.repository.CreateOrder(ctx, draft)
 	if err != nil {
 		return repository.OrderDetail{}, err
@@ -67,9 +64,6 @@ func (s *Service) UpdateOrder(ctx context.Context, principal repository.Principa
 	draft, fields := NormalizeOrder(request)
 	if len(fields) > 0 {
 		return repository.OrderDetail{}, &ValidationError{Fields: fields}
-	}
-	if !hasSalesperson(principal, draft.SalespersonID) {
-		return repository.OrderDetail{}, ErrForbidden
 	}
 	if err := s.repository.UpdateOrder(ctx, orderID, principal.SalespersonIDs, draft); err != nil {
 		return repository.OrderDetail{}, err
