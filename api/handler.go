@@ -44,6 +44,7 @@ func (h *Handler) Register(group *gin.RouterGroup) {
 	group.Use(h.requestID(), h.authenticate())
 	group.GET("/salespersons", h.listSalespersons)
 	group.GET("/customers", h.listCustomers)
+	group.GET("/customers/all", h.listAllCustomers)
 	group.GET("/products", h.listProducts)
 	group.GET("/products/:productId/price", h.getProductPrice)
 	group.GET("/orders", h.listOrders)
@@ -142,7 +143,20 @@ func (h *Handler) listCustomers(c *gin.Context) {
 	}
 	writeSuccess(c, items, nil)
 }
-
+func (h *Handler) listAllCustomers(c *gin.Context) {
+	items, err := h.service.AllCustomers(c.Request.Context())
+	if err != nil {
+		writeError(
+			c,
+			http.StatusServiceUnavailable,
+			"SERVICE_UNAVAILABLE",
+			"Service is temporarily unavailable",
+			nil,
+		)
+		return
+	}
+	writeSuccess(c, items, nil)
+}
 func (h *Handler) listProducts(c *gin.Context) {
 	items, err := h.service.Products(c.Request.Context())
 	if err != nil {

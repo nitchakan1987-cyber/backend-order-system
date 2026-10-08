@@ -17,6 +17,7 @@ type Repository interface {
 	Authenticate(context.Context, string) (repository.Principal, bool, error)
 	ListSalespersons(context.Context, int64) ([]repository.Salesperson, error)
 	ListCustomers(context.Context, int64) ([]repository.Customer, error)
+	ListAllCustomers(context.Context) ([]repository.CustomerAll, error)
 	ListProducts(context.Context) ([]repository.Product, error)
 	LatestProductPrice(context.Context, int64) (repository.ProductPrice, error)
 	ListOrders(context.Context, repository.OrderFilter) (repository.OrderList, error)
@@ -55,6 +56,12 @@ func (s *Service) Salespersons(ctx context.Context, principal repository.Princip
 
 func (s *Service) Customers(ctx context.Context, principal repository.Principal, salespersonID int64) ([]repository.Customer, error) {
 	return s.repository.ListCustomers(ctx, salespersonID)
+}
+
+func (s *Service) AllCustomers(
+	ctx context.Context,
+) ([]repository.CustomerAll, error) {
+	return s.repository.ListAllCustomers(ctx)
 }
 
 func (s *Service) Products(ctx context.Context) ([]repository.Product, error) {

@@ -33,6 +33,12 @@ type Customer struct {
 	SalespersonID int64  `json:"salespersonId"`
 	MarketType    string `json:"marketType"`
 }
+type CustomerAll struct {
+	ID         int64  `json:"id"`
+	Code       string `json:"code"`
+	Name       string `json:"name"`
+	MarketType string `json:"marketType"`
+}
 
 type Product struct {
 	ID   int64  `json:"id"`
@@ -146,6 +152,49 @@ func (r *MySQL) ListCustomers(
 			&code,
 			&item.Name,
 			&item.SalespersonID,
+			&item.MarketType,
+		); err != nil {
+			return nil, err
+		}
+
+		item.Code = code.String
+		items = append(items, item)
+	}
+
+	return items, rows.Err()
+}
+
+func (r *MySQL) ListAllCustomers(
+	ctx context.Context,
+) ([]CustomerAll, error) {
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT
+			id,
+			code,
+			name,
+			CASE
+				WHEN UPPER(marketType) = 'EXPORT' THEN 'EXPORT'
+				ELSE 'DOMESTIC'
+			END AS market_type
+		FROM customers
+		ORDER BY name, id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]CustomerAll, 0)
+
+	for rows.Next() {
+		var item CustomerAll
+		var code sql.NullString
+
+		if err := rows.Scan(
+			&item.ID,
+			&code,
+			&item.Name,
 			&item.MarketType,
 		); err != nil {
 			return nil, err
