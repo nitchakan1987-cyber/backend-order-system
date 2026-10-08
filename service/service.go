@@ -20,7 +20,7 @@ type Repository interface {
 	ListProducts(context.Context) ([]repository.Product, error)
 	LatestProductPrice(context.Context, int64) (repository.ProductPrice, error)
 	ListOrders(context.Context, repository.OrderFilter) (repository.OrderList, error)
-	LoadOrder(context.Context, int64, []int64) (repository.OrderDetail, error)
+	LoadOrder(context.Context, int64) (repository.OrderDetail, error)
 	ListDeliverySchedule(context.Context, []int64, time.Time, time.Time) ([]repository.DeliveryRow, error)
 	CreateOrder(context.Context, repository.OrderDraft) (int64, error)
 	UpdateOrder(context.Context, int64, []int64, repository.OrderDraft) error
@@ -70,7 +70,7 @@ func (s *Service) Orders(ctx context.Context, principal repository.Principal, fi
 }
 
 func (s *Service) Order(ctx context.Context, principal repository.Principal, orderID int64) (repository.OrderDetail, error) {
-	return s.repository.LoadOrder(ctx, orderID, principal.SalespersonIDs)
+	return s.repository.LoadOrder(ctx, orderID)
 }
 
 func (s *Service) DeliverySchedule(ctx context.Context, principal repository.Principal, start, end time.Time) ([]repository.DeliveryRow, error) {

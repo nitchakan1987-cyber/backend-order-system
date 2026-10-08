@@ -196,12 +196,9 @@ func (r *MySQL) ListOrders(ctx context.Context, filter OrderFilter) (OrderList, 
 	return result, nil
 }
 
-func (r *MySQL) LoadOrder(ctx context.Context, orderID int64, salespersonIDs []int64) (OrderDetail, error) {
+func (r *MySQL) LoadOrder(ctx context.Context, orderID int64) (OrderDetail, error) {
 	var detail OrderDetail
-	args := []any{orderID}
-	for _, id := range salespersonIDs {
-		args = append(args, id)
-	}
+
 	err := r.db.QueryRowContext(ctx, `
 		SELECT o.id, o.order_no, COALESCE(DATE_FORMAT(o.order_date, '%Y-%m-%d'), ''), o.salesperson_id,
 			o.customer_id,
@@ -214,7 +211,7 @@ func (r *MySQL) LoadOrder(ctx context.Context, orderID int64, salespersonIDs []i
 			CAST(COALESCE(o.freight_charge, 0) + COALESCE(o.insurance_charge, 0) AS CHAR),
 			CAST(COALESCE((SELECT SUM(item.quantity * item.price) FROM order_items AS item WHERE item.order_id = o.id), 0) + COALESCE(o.freight_charge, 0) + COALESCE(o.insurance_charge, 0) AS CHAR)
 		FROM orders AS o
-		WHERE o.id = ? AND o.deleted_at IS NULL AND o.salesperson_id IN (`+placeholders(len(salespersonIDs))+`)`, args...).
+		WHERE o.id = ? AND o.deleted_at IS NULL `, orderID).
 		Scan(&detail.ID, &detail.OrderNo, &detail.OrderDate, &detail.SalespersonID, &detail.CustomerID,
 			&detail.DeliveryStatus, &detail.FreightCharge, &detail.InsuranceCharge,
 			&detail.Subtotal, &detail.AdditionalCharges, &detail.GrandTotal)

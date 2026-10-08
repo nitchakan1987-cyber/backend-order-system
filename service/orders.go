@@ -60,7 +60,7 @@ func (s *Service) CreateOrder(ctx context.Context, principal repository.Principa
 	if err != nil {
 		return repository.OrderDetail{}, err
 	}
-	return s.repository.LoadOrder(ctx, orderID, principal.SalespersonIDs)
+	return s.repository.LoadOrder(ctx, orderID)
 }
 
 func (s *Service) UpdateOrder(ctx context.Context, principal repository.Principal, orderID int64, request OrderRequest) (repository.OrderDetail, error) {
@@ -74,7 +74,7 @@ func (s *Service) UpdateOrder(ctx context.Context, principal repository.Principa
 	if err := s.repository.UpdateOrder(ctx, orderID, principal.SalespersonIDs, draft); err != nil {
 		return repository.OrderDetail{}, err
 	}
-	return s.repository.LoadOrder(ctx, orderID, principal.SalespersonIDs)
+	return s.repository.LoadOrder(ctx, orderID)
 }
 
 func (s *Service) DeleteOrder(ctx context.Context, principal repository.Principal, orderID int64) error {
